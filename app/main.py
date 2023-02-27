@@ -1,5 +1,5 @@
 #This API will provide AI models using fastAPI
-
+from typing import List
 from fastapi import FastAPI,Response,status, Depends
 from fastapi.exceptions import HTTPException
 import openai
@@ -16,7 +16,8 @@ from  config import settings
 import models
 from database import engine, get_db
 import utils
-from schema import ImageCreate, ImageResponse
+from schema import *
+
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -35,7 +36,7 @@ os.mkdir("static\mask")
 app = FastAPI()
 
 #Retrieve all elements in db
-@app.get("/images", status_code=status.HTTP_200_OK)
+@app.get("/images", status_code=status.HTTP_200_OK, response_model=List[ImageResponse])
 def get_all_images(db: Session = Depends(get_db)):
     print('[LOG] Request received')
     images = db.query(models.Image).all()
@@ -105,3 +106,17 @@ def del_image(image_id: int, db: Session = Depends(get_db)):
     print('[LOG] Image deleted from server')
 
     return Response(status_code = status.HTTP_204_NO_CONTENT)
+
+@app.post('/users', status_code=status.HTTP_201_CREATED, response_model=UserResponse)
+def create_user(user: UserCreate, db: Session = Depends(get_db)):
+    print('[LOG] Request received, creating new user')
+    
+    #hass user password - user.password
+    hashed_password = utils.hash_password(user.password)
+    user.password = hashed_password
+
+    new_user = models.User(**user.dict())
+    db.add(new_user) 
+    db.commit()
+    db.refresh(new_user)
+    return new_user

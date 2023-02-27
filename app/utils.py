@@ -9,8 +9,11 @@ import matplotlib.pyplot as plt
 from PIL import Image 
 from datetime import datetime
 
+from passlib.context import CryptContext
+
 image_dir = "static\images"
 image_dir_mask = "static\mask"
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 def generation_response(prompt):
     generation_response = openai.Image.create(
@@ -95,3 +98,8 @@ def edit_image(image,mask,prompt,path_image):
     generated_image_edit = requests.get(image_url).content  # download the image
     with open(generated_image_edit_name, "wb") as image_file:
         image_file.write(generated_image_edit)  # write the image to the file
+
+def hash_password(user_password: str):
+    hashed_password = pwd_context.hash(user_password)
+    
+    return hashed_password
