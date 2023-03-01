@@ -9,25 +9,30 @@ import os
 import models, schema, utils
 from database import get_db
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/images',
+    tags = ['images']
+)
+
+
 path_image = '..\static\images'
 
 
 #Retrieve all elements in db
-@router.get("/images", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
+@router.get("/", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
 def get_all_images(db: Session = Depends(get_db)):
     print('[LOG] Request received')
     images = db.query(models.Image).all()
     return images
 
-@router.get('/images/{image_id}', status_code=status.HTTP_200_OK, response_model=schema.ImageResponse)
+@router.get('/{image_id}', status_code=status.HTTP_200_OK, response_model=schema.ImageResponse)
 def get_one_image(image_id: int, db: Session = Depends(get_db)):
     print('[LOG] Request received for image_id: %s', image_id)
     image = db.query(models.Image).filter(models.Image.id == image_id).first()
     return image 
 
 #Create Image
-@router.post("/images", status_code=status.HTTP_201_CREATED, response_model=schema.ImageResponse)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.ImageResponse)
 def create_image(item: schema.ImageCreate, db: Session = Depends(get_db)):
     print('[LOG] Prompt received, starting generation')
     generation_response = utils.generation_response(item.prompt)
@@ -40,7 +45,7 @@ def create_image(item: schema.ImageCreate, db: Session = Depends(get_db)):
     return new_image
 
 #Modify Image
-@router.put("/images/{image_id}", status_code=status.HTTP_201_CREATED,response_model=schema.ImageResponse)
+@router.put("/{image_id}", status_code=status.HTTP_201_CREATED,response_model=schema.ImageResponse)
 def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(get_db)):
     image_query = db.query(models.Image).filter(models.Image.id == image_id)
     image = image_query.first()
@@ -68,7 +73,7 @@ def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(ge
     db.refresh(image)
     return image
 
-@router.delete('/images/{image_id}')
+@router.delete('/{image_id}')
 def del_image(image_id: int, db: Session = Depends(get_db)):
     image_query = db.query(models.Image).filter(models.Image.id == image_id)
     image = image_query.first()

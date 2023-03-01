@@ -103,3 +103,6 @@ def hash_password(user_password: str):
     hashed_password = pwd_context.hash(user_password)
     
     return hashed_password
+
+def verify(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)

@@ -17,7 +17,7 @@ import models
 from database import engine, get_db
 import utils
 from schema import *
-from routers import images, users
+from routers import images, users, auth
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -38,6 +38,7 @@ app = FastAPI()
 
 app.include_router(images.router)
 app.include_router(users.router)
+app.include_router(auth.router)
 
 @app.get('/')
 def root():

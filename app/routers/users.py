@@ -6,9 +6,12 @@ from sqlalchemy.orm import Session
 import models, schema, utils
 from database import get_db
 
-router = APIRouter()
+router = APIRouter(
+    prefix='/users',
+    tags = ['users']
+)
 
-@router.post('/users', status_code=status.HTTP_201_CREATED, response_model=schema.UserResponse)
+@router.post('/', status_code=status.HTTP_201_CREATED, response_model=schema.UserResponse)
 def create_user(user: schema.UserCreate, db: Session = Depends(get_db)):
     print('[LOG] Request received, creating new user')
     
@@ -22,7 +25,7 @@ def create_user(user: schema.UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     return new_user
 
-@router.get('/users/{user_id}', response_model = schema.UserResponse)
+@router.get('/{user_id}', response_model = schema.UserResponse)
 def get_user(user_id: int, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.id == user_id).first()
     
