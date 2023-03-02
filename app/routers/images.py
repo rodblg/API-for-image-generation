@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from typing import List
 import os
 
-import models, schema, utils
+import models, schema, utils, oauth2
 from database import get_db
 
 router = APIRouter(
@@ -15,12 +15,14 @@ router = APIRouter(
 )
 
 
-path_image = '..\static\images'
+path_image = 'app\static\images'
 
 
 #Retrieve all elements in db
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
-def get_all_images(db: Session = Depends(get_db)):
+def get_all_images(db: Session = Depends(get_db),
+                   user_id: int = Depends(oauth2.get_current_user)):
+    
     print('[LOG] Request received')
     images = db.query(models.Image).all()
     return images
@@ -33,7 +35,9 @@ def get_one_image(image_id: int, db: Session = Depends(get_db)):
 
 #Create Image
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.ImageResponse)
-def create_image(item: schema.ImageCreate, db: Session = Depends(get_db)):
+def create_image(item: schema.ImageCreate, db: Session = Depends(get_db), 
+                 user_id: int = Depends(oauth2.get_current_user)):
+    
     print('[LOG] Prompt received, starting generation')
     generation_response = utils.generation_response(item.prompt)
     path= utils.save_image(generation_response)
@@ -74,10 +78,12 @@ def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(ge
     return image
 
 @router.delete('/{image_id}')
-def del_image(image_id: int, db: Session = Depends(get_db)):
+def del_image(image_id: int, db: Session = Depends(get_db), 
+              user_id: int = Depends(oauth2.get_current_user)):
+    
     image_query = db.query(models.Image).filter(models.Image.id == image_id)
     image = image_query.first()
-    print('[LOG] Image found in server')
+    print('[LOG] Image found in server', image)
     if image == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Image with id: {image_id} not found')
@@ -86,6 +92,7 @@ def del_image(image_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     del_im = os.path.join(path_image, image.path_image)
+    print(del_im)
     os.remove(del_im)
     print('[LOG] Image deleted from server')
 
