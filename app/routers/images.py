@@ -15,20 +15,21 @@ router = APIRouter(
 )
 
 
-path_image = 'app\static\images'
+path_image = 'static\images'
 
 
 #Retrieve all elements in db
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
 def get_all_images(db: Session = Depends(get_db),
-                   user_id: int = Depends(oauth2.get_current_user)):
+                   current_user: int = Depends(oauth2.get_current_user)):
     
     print('[LOG] Request received')
     images = db.query(models.Image).all()
     return images
 
 @router.get('/{image_id}', status_code=status.HTTP_200_OK, response_model=schema.ImageResponse)
-def get_one_image(image_id: int, db: Session = Depends(get_db)):
+def get_one_image(image_id: int, db: Session = Depends(get_db),
+                  current_user: int = Depends(oauth2.get_current_user)):
     print('[LOG] Request received for image_id: %s', image_id)
     image = db.query(models.Image).filter(models.Image.id == image_id).first()
     return image 
@@ -36,13 +37,13 @@ def get_one_image(image_id: int, db: Session = Depends(get_db)):
 #Create Image
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.ImageResponse)
 def create_image(item: schema.ImageCreate, db: Session = Depends(get_db), 
-                 user_id: int = Depends(oauth2.get_current_user)):
-    
+                 current_user: int = Depends(oauth2.get_current_user)):
+    print(current_user.name)
     print('[LOG] Prompt received, starting generation')
     generation_response = utils.generation_response(item.prompt)
     path= utils.save_image(generation_response)
     print(path)
-    new_image = models.Image(path_image=path,prompt = item.prompt)
+    new_image = models.Image(path_image=path,prompt = item.prompt, owner_id=current_user.id)
     db.add(new_image)
     db.commit()
     db.refresh(new_image)
@@ -50,13 +51,18 @@ def create_image(item: schema.ImageCreate, db: Session = Depends(get_db),
 
 #Modify Image
 @router.put("/{image_id}", status_code=status.HTTP_201_CREATED,response_model=schema.ImageResponse)
-def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(get_db)):
+def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(get_db),
+               current_user: int = Depends(oauth2.get_current_user)):
     image_query = db.query(models.Image).filter(models.Image.id == image_id)
     image = image_query.first()
 
     if image == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Image with id: {image_id} does not exist')
+    
+    if image.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f'Not authorized to performe current action')
     
     img_path = os.path.join(path_image,image.path_image)
 
@@ -79,7 +85,7 @@ def edit_image(item: schema.ImageCreate, image_id: int, db: Session = Depends(ge
 
 @router.delete('/{image_id}')
 def del_image(image_id: int, db: Session = Depends(get_db), 
-              user_id: int = Depends(oauth2.get_current_user)):
+              current_user: int = Depends(oauth2.get_current_user)):
     
     image_query = db.query(models.Image).filter(models.Image.id == image_id)
     image = image_query.first()
@@ -88,12 +94,17 @@ def del_image(image_id: int, db: Session = Depends(get_db),
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail=f'Image with id: {image_id} not found')
     
-    image_query.delete()
-    db.commit()
+    if image.owner_id != current_user.id:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,
+                            detail=f'Not authorized to performe current action')
 
-    del_im = os.path.join(path_image, image.path_image)
-    print(del_im)
-    os.remove(del_im)
+    if image != None:
+        del_im = os.path.join(path_image, image.path_image)
+        print(del_im)
+        os.remove(del_im)
+
+    image_query.delete()
+    db.commit()    
     print('[LOG] Image deleted from server')
 
     return Response(status_code = status.HTTP_204_NO_CONTENT)

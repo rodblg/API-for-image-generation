@@ -12,6 +12,9 @@ class ImageCreate(ImageBase):
 class ImageResponse(BaseModel):
     path_image: str
     prompt:     str
+    id:         int
+    owner_id:    int
+    created_at: datetime
     class Config:
         orm_mode = True
 
