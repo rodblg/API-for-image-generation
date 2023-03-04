@@ -9,20 +9,6 @@ class ImageBase(BaseModel):
 class ImageCreate(ImageBase):
     pass
 
-class ImageResponse(BaseModel):
-    path_image: str
-    prompt:     str
-    id:         int
-    owner_id:    int
-    created_at: datetime
-    class Config:
-        orm_mode = True
-
-class UserCreate(BaseModel):
-    name:     str
-    email:    EmailStr
-    password: str
-
 class UserResponse(BaseModel):
     id:       int
     name:     str
@@ -30,6 +16,22 @@ class UserResponse(BaseModel):
     created_at: datetime
     class Config:
         orm_mode = True
+
+class ImageResponse(BaseModel):
+    path_image: str
+    prompt:     str
+    id:         int
+    owner_id:   int
+    owner:      UserResponse
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class UserCreate(BaseModel):
+    name:     str
+    email:    EmailStr
+    password: str
 
 class UserLogin(BaseModel):
     email: EmailStr

@@ -3,7 +3,7 @@ from fastapi import FastAPI,Response,status, Depends, APIRouter
 from fastapi.exceptions import HTTPException
 from sqlalchemy.orm import Session
 
-from typing import List
+from typing import List, Optional
 import os
 
 import models, schema, utils, oauth2
@@ -21,10 +21,11 @@ path_image = 'static\images'
 #Retrieve all elements in db
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
 def get_all_images(db: Session = Depends(get_db),
-                   current_user: int = Depends(oauth2.get_current_user)):
-    
+                   current_user: int = Depends(oauth2.get_current_user), 
+                   limit: int = 5, skip: int = 0, search: Optional[str] = ''):
+    print(limit)
     print('[LOG] Request received')
-    images = db.query(models.Image).all()
+    images = db.query(models.Image).filter(models.Image.prompt.contains(search)).limit(limit).offset(skip).all()
     return images
 
 @router.get('/{image_id}', status_code=status.HTTP_200_OK, response_model=schema.ImageResponse)
