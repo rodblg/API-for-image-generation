@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, ForeignKey
 from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
-from database import Base
+from app.database import Base
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 
 class Image(Base):
@@ -23,4 +23,5 @@ class User(Base):
     email = Column(String, nullable=False, unique=True)
     password = Column(String, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable = False, server_default=text('now()'))
+    phone = Column(String, nullable=False)
     

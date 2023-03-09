@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 import models,utils, database, config
 from routers import images, users, auth
 
-models.Base.metadata.create_all(bind=database.engine)
+#models.Base.metadata.create_all(bind=database.engine)
 
 # set API key
 openai.api_key = config.settings.OPENAI_APIKEY

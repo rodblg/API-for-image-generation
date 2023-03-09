@@ -1,6 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
+from app.config import settings
 
 # Dependency
 def get_db():
@@ -11,7 +12,7 @@ def get_db():
         db.close()
 
 
-SQLALCHEMY_DATABASE_URL = "postgresql://postgres:RB.2022@localhost/Dalle_fastapi"
+SQLALCHEMY_DATABASE_URL = f"postgresql://{settings.POSTGRES_USER}:{settings.POSTGRES_PASSWORD}@{settings.POSTGRES_HOST}/{settings.POSTGRES_DB}"
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

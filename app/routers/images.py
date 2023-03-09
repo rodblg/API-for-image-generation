@@ -22,10 +22,11 @@ path_image = 'static\images'
 @router.get("/", status_code=status.HTTP_200_OK, response_model=List[schema.ImageResponse])
 def get_all_images(db: Session = Depends(get_db),
                    current_user: int = Depends(oauth2.get_current_user), 
-                   limit: int = 5, skip: int = 0, search: Optional[str] = ''):
-    print(limit)
+                   limit: int = 10, skip: int = 0, search: Optional[str] = ''):
+    
     print('[LOG] Request received')
     images = db.query(models.Image).filter(models.Image.prompt.contains(search)).limit(limit).offset(skip).all()
+    
     return images
 
 @router.get('/{image_id}', status_code=status.HTTP_200_OK, response_model=schema.ImageResponse)
