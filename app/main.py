@@ -1,5 +1,6 @@
 #This API will provide AI models using fastAPI
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import openai
 
 import os   
@@ -25,6 +26,21 @@ os.mkdir("static\mask")
 #API instance
 app = FastAPI()
 
+origins = ['https://www.google.com.mx']
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.include_router(images.router)
 app.include_router(users.router)
 app.include_router(auth.router)
+
+
+@app.get("/")
+async def main():
+    return {"message": "Hello World"}
